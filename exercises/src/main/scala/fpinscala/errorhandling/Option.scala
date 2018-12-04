@@ -78,15 +78,20 @@ object Option {
     case h :: t => map2(h, sequence(t))(_ :: _)
   }
 
+  def traverse[A, B](a: List[A])(f: A => Option[B]): Option[List[B]] = a match {
+    case Nil => Some(Nil)
+    //    case h :: t => f(h).flatMap(hh => traverse(t)(f).map(tt => hh::tt))
+    case h :: t => map2(f(h), traverse(t)(f))(_ :: _)
+  }
+
+  // traverse vs sequence
+  // unlike sequence, traverse takes a function to transform List[A] to List[Option[B]],
+  // and then from List[Option[B]] to Option[List[B]]
+  // both will return None if any element in List[Option[A]] is None.
+
   def sequenceFoldRight[A](a: List[Option[A]]): Option[List[A]] =
 //    a.foldRight[Option[List[A]]](Some(Nil))((a, b) => a.flatMap(aa => b.map(bb => aa::bb)))
     a.foldRight[Option[List[A]]](Some(Nil))((a, b) => map2(a, b)(_ :: _))
-
-  def traverse[A, B](a: List[A])(f: A => Option[B]): Option[List[B]] = a match {
-    case Nil => Some(Nil)
-//    case h :: t => f(h).flatMap(hh => traverse(t)(f).map(tt => hh::tt))
-    case h :: t => map2(f(h), traverse(t)(f))(_ :: _)
-  }
 
   def traverseFoldRight[A, B](a: List[A])(f: A => Option[B]): Option[List[B]] = a.foldRight[Option[List[B]]](Some(Nil))((a, b) => map2(f(a), b)(_ :: _))
 
