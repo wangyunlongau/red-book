@@ -21,23 +21,23 @@ sealed trait Option[+A] {
 //    }
 
   def orElse[B>:A](ob: => Option[B]): Option[B] = this map (Some(_)) getOrElse ob
-  def orElse_PatternMatch1[B>:A](ob: => Option[B]): Option[B] = this match {
+  def orElsePatternMatch1[B>:A](ob: => Option[B]): Option[B] = this match {
     case None => ob
     case Some(a) => Some(a)
   }
-  def orElse_PatternMatch2[B>:A](ob: => Option[B]): Option[B] = this match {
+  def orElsePatternMatch2[B>:A](ob: => Option[B]): Option[B] = this match {
     case None => ob
     case _ => this
   }
 
   def filter(f: A => Boolean): Option[A] = flatMap(a => if (f(a)) Some(a) else None)
 
-  def filter_PatternMatch1(f: A => Boolean): Option[A] = this match {
+  def filterPatternMatch1(f: A => Boolean): Option[A] = this match {
     case None => None
     case Some(a) => if (f(a)) Some(a) else None
   }
 
-  def filter_PatternMatch2(f: A => Boolean): Option[A] = this match {
+  def filterPatternMatch2(f: A => Boolean): Option[A] = this match {
     case Some(a) if f(a) => this
     case _ => None
   }
@@ -74,8 +74,13 @@ object Option {
 
   def sequence[A](a: List[Option[A]]): Option[List[A]] = a match {
     case Nil => Some(Nil)
-    case h::t => if
+//    case h :: t => h.flatMap(hh => sequence(t).map(tt => hh :: tt))
+    case h :: t => map2(h, sequence(t))((hh, tt) => hh :: tt)
   }
 
-  def traverse[A, B](a: List[A])(f: A => Option[B]): Option[List[B]] = ???
+  def sequenceFoldRight[A](a: List[Option[A]]): Option[List[A]] =
+//    a.foldRight[Option[List[A]]](Some(Nil))((a, b) => a.flatMap(aa => b.map(bb => aa::bb)))
+  a.foldRight[Option[List[A]]](Some(Nil))((a, b) => map2(a, b)((aa, bb) => aa :: bb))
+
+  def traverse[A, B](a: List[A])(f: A => Option[B]): Option[List[B]] =
 }
