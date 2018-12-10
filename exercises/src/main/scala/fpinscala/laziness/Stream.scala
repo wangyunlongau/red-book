@@ -1,20 +1,31 @@
 package fpinscala.laziness
 
 import Stream._
+
 trait Stream[+A] {
+
+  // 5.1
+  def toListRecursive: List[A] = this match {
+    case Empty => Nil
+    // as t is () => Stream[A], we need to call t(), in other words, force it to get Stream to be able to call toList
+    case Cons(h, t) => h() :: t().toList
+  }
+
+  def toList: List[A] = ???
 
   def foldRight[B](z: => B)(f: (A, => B) => B): B = // The arrow `=>` in front of the argument type `B` means that the function `f` takes its second argument by name and may choose not to evaluate it.
     this match {
-      case Cons(h,t) => f(h(), t().foldRight(z)(f)) // If `f` doesn't evaluate its second argument, the recursion never occurs.
+      case Cons(h, t) =>
+        f(h(), t().foldRight(z)(f)) // If `f` doesn't evaluate its second argument, the recursion never occurs.
       case _ => z
     }
 
-  def exists(p: A => Boolean): Boolean = 
+  def exists(p: A => Boolean): Boolean =
     foldRight(false)((a, b) => p(a) || b) // Here `b` is the unevaluated recursive step that folds the tail of the stream. If `p(a)` returns `true`, `b` will never be evaluated and the computation terminates early.
 
   @annotation.tailrec
   final def find(f: A => Boolean): Option[A] = this match {
-    case Empty => None
+    case Empty      => None
     case Cons(h, t) => if (f(h())) Some(h()) else t().find(f)
   }
   def take(n: Int): Stream[A] = ???
@@ -45,7 +56,7 @@ object Stream {
   def empty[A]: Stream[A] = Empty
 
   def apply[A](as: A*): Stream[A] =
-    if (as.isEmpty) empty 
+    if (as.isEmpty) empty
     else cons(as.head, apply(as.tail: _*))
 
   val ones: Stream[Int] = Stream.cons(1, ones)
